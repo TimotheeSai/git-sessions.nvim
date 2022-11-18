@@ -1,8 +1,7 @@
--- make sure this file is loaded only once
-if vim.g.loaded_my_awesome_plugin == 1 then
+if vim.g.loaded_git_sessions == 1 then
   return
 end
-vim.g.loaded_my_awesome_plugin = 1
+vim.g.loaded_git_sessions = 1
 
 -- create any global command that does not depend on user setup
 -- usually it is better to define most commands/mappings in the setup function
