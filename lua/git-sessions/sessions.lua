@@ -6,8 +6,12 @@ local git = require 'git-sessions.git'
 
 local _M = {}
 
-function _M.create_branch_sessions_dir(base_dir, session_dir)
-    Path.mkdir(Path:new(base_dir, session_dir))
+function _M.create_branch_sessions_dir(base_dir)
+    Path.mkdir(Path:new(base_dir, git.current_repo()))
+end
+
+function _M.list_repo(session_dir)
+    return scan.scan_dir(session_dir .. git.current_repo(), { depth = 1 })
 end
 
 function _M.get_current(session_dir)
@@ -21,27 +25,6 @@ function _M.get_current(session_dir)
         session = string.gsub(cwd, '(.*)/', '')
     end
     return session_dir .. '/' .. session .. '.vim'
-end
-
-
-function _M.select_session(session_dir)
-    local sessions = scan.scan_dir(session_dir)
-    vim.ui.select(
-        sessions,
-        {
-            prompt = 'Select session:',
-            format_item = function(item)
-                if item ~= '' then
-                    return string.gsub(item, session_dir .. '/', '')
-                end
-            end,
-        },
-        function(choice)
-            if choice ~= '' then
-                _M.load_session(choice)
-            end
-        end
-    )
 end
 
 function _M.save_session(session_dir)
@@ -72,6 +55,26 @@ function _M.delete(choice)
     if choice ~= nil then
         os.remove(choice)
     end
+end
+
+function _M.select(session_dir)
+    local sessions = scan.scan_dir(session_dir)
+    vim.ui.select(
+        sessions,
+        {
+            prompt = 'Select session:',
+            format_item = function(item)
+                if item ~= '' then
+                    return string.gsub(item, session_dir .. '/', '')
+                end
+            end,
+        },
+        function(choice)
+            if choice ~= '' then
+                _M.load(choice)
+            end
+        end
+    )
 end
 
 function _M.ui_delete_session(session_dir)

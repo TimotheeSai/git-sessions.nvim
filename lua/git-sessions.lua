@@ -22,8 +22,8 @@ function _M.get_current()
     return sessions.get_current(session_dir)
 end
 
-function _M.select_session()
-    return sessions.select_session(session_dir)
+function _M.select()
+    return sessions.select(session_dir)
 end
 
 function _M.save_session()
@@ -40,23 +40,57 @@ end
 
 _M.config = {
     create_mapping = true,
-    select_mapping = '<Leader>sc',
-    save_mapping = '<Leader>ss',
-    load_mapping = '<Leader>sl',
-    delete_mapping = '<Leader>sd',
-    save_session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
+    mapping = {
+        select = '<Leader>sc',
+        save = '<Leader>ss',
+        load = '<Leader>sl',
+        delete = '<Leader>sd',
+    },
+    session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
 }
 
 function _M.setup(user_opts)
     _M.config = vim.tbl_extend("force", _M.config, user_opts or {})
 
+    vim.api.nvim_create_user_command(
+        "SaveSession",
+        function()
+            sessions.save_session(_M.config.session_dir)
+        end,
+        {}
+    )
+
+    vim.api.nvim_create_user_command(
+        "LoadSession",
+        function()
+            sessions.load(_M.config.session_dir)
+        end,
+        {}
+    )
+
+    vim.api.nvim_create_user_command(
+        "SelectSession",
+        function()
+            sessions.select(_M.config.session_dir)
+        end,
+        {}
+    )
+
+    vim.api.nvim_create_user_command(
+        "DeleteSession",
+        function()
+            sessions.ui_delete_session(_M.config.session_dir)
+        end,
+        {}
+    )
+
     if _M.config.create_mappings then
         local opts = { noremap = false }
-        vim.keymap.set('n', '<Leader>ss', _M.save_session, opts)
-        vim.keymap.set('n', '<Leader>sl', _M.load_session, opts)
-        vim.keymap.set('n', '<Leader>sc', _M.select_session, opts)
-        vim.keymap.set('n', '<Leader>sd', _M.ui_delete_session, opts)
-  end
+        vim.keymap.set('n', _M.config.mapping.save, 'SaveSession', opts)
+        vim.keymap.set('n', _M.config.mapping.load, 'LoadSession', opts)
+        vim.keymap.set('n', _M.config.mapping.select, 'SelectSession', opts)
+        vim.keymap.set('n', _M.config.mapping.delete, 'DeleteSession', opts)
+    end
 end
 
 return _M

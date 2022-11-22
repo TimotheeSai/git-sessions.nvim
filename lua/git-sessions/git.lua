@@ -42,4 +42,7 @@ function _M.current_repo()
     return repo:match("^.+/(.+)$")
 end
 
+function _M.checkout(branch)
+end
+
 return _M
