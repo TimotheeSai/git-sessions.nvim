@@ -6,10 +6,11 @@ local _M = {}
 _M.config = {
     create_mappings = true,
     mapping = {
-        select = '<leader>sc',
-        save = '<leader>ss',
-        load = '<leader>sl',
-        delete = '<leader>sd',
+        select      = '<leader>se',
+        checkout    = '<leader>sc',
+        save        = '<leader>ss',
+        load        = '<leader>sl',
+        delete      = '<leader>sd',
     },
     session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
 }
@@ -50,10 +51,19 @@ function _M.setup(user_opts)
         {}
     )
 
+    vim.api.nvim_create_user_command(
+        "CheckoutSession",
+        function()
+            sessions.checkout(_M.config.session_dir)
+        end,
+        {}
+    )
+
     if _M.config.create_mappings == true then
         local opts = { noremap = false }
         vim.keymap.set('n', _M.config.mapping.save, ':SaveSession<CR>', opts)
         vim.keymap.set('n', _M.config.mapping.load, ':LoadSession<CR>', opts)
+        vim.keymap.set('n', _M.config.mapping.checkout, ':CheckoutSession<CR>', opts)
         vim.keymap.set('n', _M.config.mapping.select, ':SelectSession<CR>', opts)
         vim.keymap.set('n', _M.config.mapping.delete, ':DeleteSession<CR>', opts)
     end

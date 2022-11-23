@@ -14,7 +14,7 @@ function _M.get_or_create_branch_sessions_dir(base_dir)
     return p
 end
 
-function _M.list_repo(session_dir)
+function _M.list_repo_sessions(session_dir)
     return scan.scan_dir(session_dir .. git.current_repo(), { depth = 1 })
 end
 
@@ -33,26 +33,31 @@ function _M.get_current(session_dir)
     return session_dir .. '/' .. session .. '.vim'
 end
 
+function _M.get_branch_session(session_dir, branch)
+    local session = git.current_repo() .. '/' .. branch
+    return session_dir .. '/' .. session .. '.vim'
+end
+
 function _M.save_session(session_dir)
     local session = _M.get_current(session_dir)
     _M.get_or_create_branch_sessions_dir(session_dir)
-    print('Save session: ' .. session)
+    vim.notify('Save session: ' .. session)
     vim.cmd('mksession! ' .. session)
 end
 
 function _M.load(session)
     local p = Path:new(session)
     if p:exists() then
-        print("Load session: " .. session)
+        vim.notify("Load session: " .. session, vim.log.levels.INFO)
         vim.cmd("source " .. session)
     else
-        print('No session found')
+        vim.notify('No session found', vim.log.levels.INFO)
     end
 end
 
 function _M.delete(session)
     if session ~= nil then
-        print('Delete session: ' .. session)
+        vim.notify('Delete session: ' .. session, vim.log.levels.INFO)
         os.remove(session)
     end
 end
@@ -88,5 +93,32 @@ end
 function _M.clean_sessions(session_dir)
     -- should delete session when no branch found
 end
+
+function _M.checkout(session_dir)
+    vim.ui.select(
+        git.local_branches(),
+        {
+            prompt = 'branch',
+            format_item = function(item)
+                if item == git.current_branch() then
+                    return '* ' .. item
+                end
+                return '  ' .. item
+            end,
+        },
+        function(choice)
+            if choice ~= '' and choice then
+                local res = git.checkout(choice)
+                if res.signal == 0 then
+                    vim.notify(res.result, vim.log.levels.INFO)
+                    print('')
+                    _M.load(_M.get_current(session_dir))
+                else
+                    vim.notify(res.error, vim.log.levels.ERROR)
+                end
+            end
+        end
+    )
+    end
 
 return _M

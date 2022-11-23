@@ -1,5 +1,6 @@
 local io = require'io'
 local Path = require('plenary.path')
+local Job = require('plenary.job')
 
 local _M = {}
 
@@ -24,7 +25,7 @@ function _M.local_branches()
         handle.close()
     end
     local branches = {}
-    for k in string.gmatch(result, '([^\n]+)') do
+    for k in string.gmatch(result, '([^\n* ]+)') do
         table.insert(branches, k)
     end
     return branches
@@ -42,6 +43,26 @@ function _M.current_repo()
 end
 
 function _M.checkout(branch)
+    local err = ''
+    local res = ''
+    local sig
+
+    Job:new({
+        command = 'git',
+        args = {'checkout', branch},
+        cwd = vim.fn.getcwd(),
+        on_exit = function(_, return_val)
+            sig = return_val
+        end,
+        on_stderr = function(_, data)
+            err = err .. '\n' .. data:gsub('\t', '  ')
+        end,
+        on_stdout = function(_, data)
+            res = res .. '\n' .. data:gsub('\t', '  ')
+        end
+    }):sync()
+
+    return {result = vim.trim(res), error = vim.trim(err), signal = sig}
 end
 
 return _M

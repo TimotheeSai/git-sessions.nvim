@@ -33,6 +33,7 @@ SaveSession     "Save current session into {session_dir}/{git_repo}/{git_branch}
 LoadSession     "Load current session from {session_dir}/{git_repo}/{git_branch}.nvim 
 SelectSession   "Pick session to select from {session_dir} 
 DeleteSession   "Pick session to delete from {session_dir} 
+CheckoutSession "Pick branch to checkout and load session from
 ```
 
 ### Options
@@ -40,12 +41,13 @@ DeleteSession   "Pick session to delete from {session_dir}
 Default config:
 ```lua
 {
-    create_mappings = true,
+    create_mappings = true,        -- create mapping for commands
     mapping = {
-        select = '<leader>sc',
-        save = '<leader>ss',
-        load = '<leader>sl',
-        delete = '<leader>sd',
+        select      = '<leader>se', --mapping for SelectSession
+        checkout    = '<leader>sc', --mapping for CheckoutSession
+        save        = '<leader>ss', --mapping for SaveSession
+        load        = '<leader>sl', --mapping for LoadSession
+        delete      = '<leader>sd', --mapping for DeleteSession
     },
     session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
 }
