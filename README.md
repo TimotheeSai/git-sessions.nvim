@@ -1,30 +1,13 @@
 # git-sessions.nvim
 
-**WIP** - Use vanilla nvim sessions to keep layout and buffers in sync with current git branch
+Use vanilla nvim `:mksession` to keep layout and buffers in sync with current git branch
 
-## Installation
-
-### Requirements
-
-- `git`
-- `nvim-lua/plenary.nvim`
-
-### Using Packer
-
-```lua
-use {
-    'TimotheeSai/git-sessions.nvim',
-    requires = {
-        {'nvim-lua/plenary.nvim'}
-    },
-    config = function()
-        require('git-sessions').setup()
-    end
-}
-
-```
+**WIP** - This is a first attempt to create a plugin for neovim, feel free to make any suggestion.
 
 ## Usage
+
+Save and load sessions from the current git branch. All sessions are stored into `session_dir` directory.
+Use `:CheckoutSession` to checkout a branch and switch to the corresponding session.
 
 ### Commands
 
@@ -49,7 +32,34 @@ Default config:
         load        = '<leader>sl', --mapping for LoadSession
         delete      = '<leader>sd', --mapping for DeleteSession
     },
-    session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
+    session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename -- $HOME/.local/share/nvim/sessions/
 }
+```
+
+As `mksession` is used, session options ar set with `vim.o.sessionoptions`, see `:h sessionoptions` for more detail
+
+## Installation
+
+### Requirements
+
+- `git`
+- `neovim > 0.7.0`
+- `nvim-lua/plenary.nvim`
+- _optional_ : `stevearc/dressing.nvim`
+
+### Using Packer
+
+```lua
+use {
+    'TimotheeSai/git-sessions.nvim',
+    requires = {
+        {'nvim-lua/plenary.nvim'},
+        {'stevearc/dressing.nvim'} --optional
+    },
+    config = function()
+        require('git-sessions').setup()
+    end
+}
+
 ```
 
