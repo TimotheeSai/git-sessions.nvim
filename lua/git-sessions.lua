@@ -3,25 +3,14 @@ local sessions = require 'git-sessions.sessions'
 
 local _M = {}
 
-_M.config = {
-    create_mappings = true,
-    mapping = {
-        select      = '<leader>se',
-        checkout    = '<leader>sc',
-        save        = '<leader>ss',
-        load        = '<leader>sl',
-        delete      = '<leader>sd',
-    },
-    session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
-}
-
+---@param user_opts? table
 function _M.setup(user_opts)
-    _M.config = vim.tbl_extend("force", _M.config, user_opts or {})
+    local cfg = require('git-sessions.config'):set(user_opts):get()
 
     vim.api.nvim_create_user_command(
         "SaveSession",
         function()
-            sessions.save_session(_M.config.session_dir)
+            sessions.save_session()
         end,
         {}
     )
@@ -29,7 +18,7 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "LoadSession",
         function()
-            local s = sessions.get_current(_M.config.session_dir)
+            local s = sessions.get_current()
             sessions.load(s)
         end,
         {}
@@ -38,7 +27,7 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "SelectSession",
         function()
-            sessions.select_load(_M.config.session_dir)
+            sessions.select_load()
         end,
         {}
     )
@@ -46,7 +35,7 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "DeleteSession",
         function()
-            sessions.select_delete(_M.config.session_dir)
+            sessions.select_delete()
         end,
         {}
     )
@@ -54,18 +43,18 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "CheckoutSession",
         function()
-            sessions.checkout(_M.config.session_dir)
+            sessions.checkout()
         end,
         {}
     )
 
-    if _M.config.create_mappings == true then
+    if cfg.create_mappings == true then
         local opts = { noremap = false }
-        vim.keymap.set('n', _M.config.mapping.save, ':SaveSession<CR>', opts)
-        vim.keymap.set('n', _M.config.mapping.load, ':LoadSession<CR>', opts)
-        vim.keymap.set('n', _M.config.mapping.checkout, ':CheckoutSession<CR>', opts)
-        vim.keymap.set('n', _M.config.mapping.select, ':SelectSession<CR>', opts)
-        vim.keymap.set('n', _M.config.mapping.delete, ':DeleteSession<CR>', opts)
+        vim.keymap.set('n', cfg.mapping.save, ':SaveSession<CR>', opts)
+        vim.keymap.set('n', cfg.mapping.load, ':LoadSession<CR>', opts)
+        vim.keymap.set('n', cfg.mapping.checkout, ':CheckoutSession<CR>', opts)
+        vim.keymap.set('n', cfg.mapping.select, ':SelectSession<CR>', opts)
+        vim.keymap.set('n', cfg.mapping.delete, ':DeleteSession<CR>', opts)
     end
 end
 

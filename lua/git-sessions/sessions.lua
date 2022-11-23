@@ -3,12 +3,13 @@ local scan = require'plenary.scandir'
 local Path = require('plenary.path')
 
 local git = require 'git-sessions.git'
+local config = require'git-sessions.config'
 
 local _M = {}
 
----@param base_dir string 
 ---@return Path
-function _M.get_or_create_branch_sessions_dir(base_dir)
+function _M.get_or_create_branch_sessions_dir()
+    local base_dir = config:get().session_dir
     local p = Path:new(base_dir, git.current_repo())
     if not p:exists() then
         p:mkdir()
@@ -16,19 +17,20 @@ function _M.get_or_create_branch_sessions_dir(base_dir)
     return p
 end
 
----@param session_dir string 
 ---@return table
-function _M.list_repo_sessions(session_dir)
+function _M.list_repo_sessions()
+    local session_dir = config:get().session_dir
     return scan.scan_dir(session_dir .. git.current_repo(), { depth = 1 })
 end
 
 ---Find session from current branch
 ---if not in a git repo will use current working dir name
----@param session_dir string 
 ---@return string
-function _M.get_current(session_dir)
+function _M.get_current()
+    local session_dir = config:get().session_dir
     local branch = git.current_branch()
     local session
+
     if branch == nil then
         local cwd = vim.fn.getcwd()
         session = string.gsub(cwd, '(.*)/', '') .. '/main'
@@ -38,17 +40,17 @@ function _M.get_current(session_dir)
     return session_dir .. '/' .. session .. '.vim'
 end
 
----@param session_dir string 
 ---@param branch string 
-function _M.get_branch_session(session_dir, branch)
+function _M.get_branch_session(branch)
+    local session_dir = config:get().session_dir
     local session = git.current_repo() .. '/' .. branch
     return session_dir .. '/' .. session .. '.vim'
 end
 
----@param session_dir string 
-function _M.save_session(session_dir)
-    local session = _M.get_current(session_dir)
-    _M.get_or_create_branch_sessions_dir(session_dir)
+---@return nil
+function _M.save_session()
+    local session = _M.get_current()
+    _M.get_or_create_branch_sessions_dir()
     vim.notify('Save session: ' .. session)
     vim.cmd('mksession! ' .. session)
 end
@@ -73,9 +75,11 @@ function _M.delete(session)
     end
 end
 
----@param session_dir string 
+---@param action function 
+---@param prompt string 
 ---@return nil
-function _M.select(session_dir, action, prompt)
+function _M.select(action, prompt)
+    local session_dir = config:get().session_dir
     local sessions = scan.scan_dir(session_dir)
     vim.ui.select(
         sessions,
@@ -95,27 +99,25 @@ function _M.select(session_dir, action, prompt)
     )
 end
 
----@param session_dir string 
+---Spawn vim.ui to pick session to load
 ---@return nil
-function _M.select_load(session_dir)
-    _M.select(session_dir, _M.load, 'Select session:')
+function _M.select_load()
+    _M.select(_M.load, 'Select session:')
 end
 
----@param session_dir string 
+---Spawn vim.ui to pick session to delete
 ---@return nil
-function _M.select_delete(session_dir)
-    _M.select(session_dir, _M.delete, 'Delete session:')
+function _M.select_delete()
+    _M.select(_M.delete, 'Delete session:')
 end
 
----@param session_dir string 
 ---@return nil
-function _M.clean_sessions(session_dir)
+function _M.clean_sessions()
     -- should delete session when no branch found
 end
 
----@param session_dir string 
 ---@return nil
-function _M.checkout(session_dir)
+function _M.checkout()
     vim.ui.select(
         git.local_branches(),
         {
@@ -133,7 +135,7 @@ function _M.checkout(session_dir)
                 if res.signal == 0 then
                     vim.notify(res.result, vim.log.levels.INFO)
                     print('')
-                    _M.load(_M.get_current(session_dir))
+                    _M.load(_M.get_current())
                 else
                     vim.notify(res.error, vim.log.levels.ERROR)
                 end
