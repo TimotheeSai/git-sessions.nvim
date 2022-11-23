@@ -1,9 +1,9 @@
 local io = require'io'
-local Path = require('plenary.path')
 local Job = require('plenary.job')
 
 local _M = {}
 
+---@return string?
 function _M.current_branch()
     local handle = io.popen('git rev-parse --abbrev-ref HEAD 2>/dev/null')
     local result
@@ -17,6 +17,7 @@ function _M.current_branch()
     end
 end
 
+---@return table
 function _M.local_branches()
     local handle = io.popen('git branch')
     local result
@@ -31,6 +32,7 @@ function _M.local_branches()
     return branches
 end
 
+---@return string
 function _M.current_repo()
     local handle = io.popen('git rev-parse --show-toplevel 2>/dev/null')
     local result
@@ -42,6 +44,8 @@ function _M.current_repo()
     return repo:match("^.+/(.+)$")
 end
 
+---@param branch string
+---@return table
 function _M.checkout(branch)
     local err = ''
     local res = ''
