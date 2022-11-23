@@ -31,14 +31,13 @@ function _M.local_branches()
 end
 
 function _M.current_repo()
-    local handle = io.popen('git rev-parse --show-toplevel')
+    local handle = io.popen('git rev-parse --show-toplevel 2>/dev/null')
     local result
     if handle ~= nil then
         result = handle:read("*a")
         handle.close()
     end
     local repo = string.gsub(result, '\n', '')
-    print(vim.inspect(Path:new(repo)))
     return repo:match("^.+/(.+)$")
 end
 

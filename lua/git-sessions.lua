@@ -1,50 +1,15 @@
-local io = require'io'
-local os = require'os'
-local scan = require'plenary.scandir'
 local Path = require('plenary.path')
-
-local session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
-
-local git = require 'git-sessions.git'
 local sessions = require 'git-sessions.sessions'
 
 local _M = {}
 
-function _M.git_branch()
-    return git.current_branch()
-end
-
-function _M.local_branches()
-    return git.local_branches()
-end
-
-function _M.get_current()
-    return sessions.get_current(session_dir)
-end
-
-function _M.select()
-    return sessions.select(session_dir)
-end
-
-function _M.save_session()
-    return sessions.save_session(session_dir)
-end
-
-function _M.load_session(session)
-    sessions.load(session_dir, session)
-end
-
-function _M.ui_delete_session()
-    sessions.ui_delete_session(session_dir)
-end
-
 _M.config = {
-    create_mapping = true,
+    create_mappings = true,
     mapping = {
-        select = '<Leader>sc',
-        save = '<Leader>ss',
-        load = '<Leader>sl',
-        delete = '<Leader>sd',
+        select = '<leader>sc',
+        save = '<leader>ss',
+        load = '<leader>sl',
+        delete = '<leader>sd',
     },
     session_dir = Path:new(vim.fn.stdpath('data'), 'sessions').filename
 }
@@ -63,7 +28,8 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "LoadSession",
         function()
-            sessions.load(_M.config.session_dir)
+            local s = sessions.get_current(_M.config.session_dir)
+            sessions.load(s)
         end,
         {}
     )
@@ -71,7 +37,7 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "SelectSession",
         function()
-            sessions.select(_M.config.session_dir)
+            sessions.select_load(_M.config.session_dir)
         end,
         {}
     )
@@ -79,17 +45,17 @@ function _M.setup(user_opts)
     vim.api.nvim_create_user_command(
         "DeleteSession",
         function()
-            sessions.ui_delete_session(_M.config.session_dir)
+            sessions.select_delete(_M.config.session_dir)
         end,
         {}
     )
 
-    if _M.config.create_mappings then
+    if _M.config.create_mappings == true then
         local opts = { noremap = false }
-        vim.keymap.set('n', _M.config.mapping.save, 'SaveSession', opts)
-        vim.keymap.set('n', _M.config.mapping.load, 'LoadSession', opts)
-        vim.keymap.set('n', _M.config.mapping.select, 'SelectSession', opts)
-        vim.keymap.set('n', _M.config.mapping.delete, 'DeleteSession', opts)
+        vim.keymap.set('n', _M.config.mapping.save, ':SaveSession<CR>', opts)
+        vim.keymap.set('n', _M.config.mapping.load, ':LoadSession<CR>', opts)
+        vim.keymap.set('n', _M.config.mapping.select, ':SelectSession<CR>', opts)
+        vim.keymap.set('n', _M.config.mapping.delete, ':DeleteSession<CR>', opts)
     end
 end
 

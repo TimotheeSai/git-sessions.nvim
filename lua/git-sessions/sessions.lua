@@ -6,8 +6,12 @@ local git = require 'git-sessions.git'
 
 local _M = {}
 
-function _M.create_branch_sessions_dir(base_dir)
-    Path.mkdir(Path:new(base_dir, git.current_repo()))
+function _M.get_or_create_branch_sessions_dir(base_dir)
+    local p = Path:new(base_dir, git.current_repo())
+    if not p:exists() then
+        p:mkdir()
+    end
+    return p
 end
 
 function _M.list_repo(session_dir)
@@ -19,83 +23,66 @@ function _M.get_current(session_dir)
     -- if not in a git repo will use current working dir name
     -- local session_dir = cfg .. '/sessions'
     local branch = git.current_branch()
-    local session = branch
+    local session
     if branch == nil then
         local cwd = vim.fn.getcwd()
         session = string.gsub(cwd, '(.*)/', '')
+    else
+        session = git.current_repo() .. '/' .. branch
     end
     return session_dir .. '/' .. session .. '.vim'
 end
 
 function _M.save_session(session_dir)
     local session = _M.get_current(session_dir)
+    _M.get_or_create_branch_sessions_dir(session_dir)
     print('Save session: ' .. session)
     vim.cmd('mksession! ' .. session)
 end
 
-function _M.load(session_dir, session)
-    local saved_sessions = scan.scan_dir(session_dir)
-    if session == nil then
-        session = _M.get_current(session_dir)
-    end
-    local loaded = false
-
-    for i=1,#saved_sessions do
-        if saved_sessions[i] == session then
-            print("Load session: " .. session)
-            vim.cmd("source " .. session)
-            loaded = true
-            break
-        end
-    end
-    if not loaded then print('No session found') end
-end
-
-function _M.delete(choice)
-    if choice ~= nil then
-        os.remove(choice)
+function _M.load(session)
+    local p = Path:new(session)
+    if p:exists() then
+        print("Load session: " .. session)
+        vim.cmd("source " .. session)
+    else
+        print('No session found')
     end
 end
 
-function _M.select(session_dir)
+function _M.delete(session)
+    if session ~= nil then
+        print('Delete session: ' .. session)
+        os.remove(session)
+    end
+end
+
+function _M.select(session_dir, action, prompt)
     local sessions = scan.scan_dir(session_dir)
     vim.ui.select(
         sessions,
         {
-            prompt = 'Select session:',
+            prompt = prompt,
             format_item = function(item)
                 if item ~= '' then
-                    return string.gsub(item, session_dir .. '/', '')
+                    return Path:new(item):make_relative(session_dir)
                 end
             end,
         },
         function(choice)
-            if choice ~= '' then
-                _M.load(choice)
+            if choice ~= '' and choice then
+                action(choice)
             end
         end
     )
 end
 
-function _M.ui_delete_session(session_dir)
-    local sessions = scan.scan_dir(session_dir)
-    vim.ui.select(
-        sessions,
-        {
-            prompt = 'Delete session:',
-            format_item = function(item)
-                if item ~= '' then
-                    return string.gsub(item, session_dir .. '/', '')
-                end
-            end,
-        },
-        function(choice)
-            if choice ~= '' then
-                print('Delete session: ' .. choice)
-                _M.delete_(choice)
-            end
-        end
-    )
+function _M.select_load(session_dir)
+    _M.select(session_dir, _M.load, 'Select session:')
+end
+
+function _M.select_delete(session_dir)
+    _M.select(session_dir, _M.delete, 'Delete session:')
 end
 
 function _M.clean_sessions(session_dir)
